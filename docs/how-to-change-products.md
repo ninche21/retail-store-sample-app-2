@@ -2,6 +2,8 @@
 
 This guide explains how product images are used in the retail store sample application and provides instructions for changing them.
 
+*Last updated: April 24, 2025*
+
 ## How Product Images Work
 
 ### Image Location and Naming
