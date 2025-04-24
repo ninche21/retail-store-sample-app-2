@@ -101,3 +101,142 @@ This documentation should help anyone who wants to customize the product images 
 **Amazon Q**: I'll create a Markdown file with the contents of our chat and add it to the repository.
 
 *[This is the resulting file you're reading now - AmazonQ.md]*
+
+## Setting up Datadog Monitoring for ECS Deployment
+
+**Human**: Hi - for this project - how do I setup the Datadog secret through terraform for the ECS deployment?
+
+**Amazon Q**: Based on my analysis of your Terraform configuration, I can see that there's already a Datadog module set up in your project. Here's how to enable and configure the Datadog secret for your ECS deployment:
+
+1. The Datadog integration is already implemented in your Terraform code, but it's disabled by default (the `enable_datadog` variable is set to `false`).
+
+2. To enable Datadog and set up the secret, you need to create a `terraform.tfvars` file with the following content:
+   ```
+   enable_datadog = true
+   datadog_api_key = "YOUR_DATADOG_API_KEY"
+   ```
+
+3. Replace `YOUR_DATADOG_API_KEY` with your actual Datadog API key.
+
+4. Apply the Terraform configuration:
+   ```
+   terraform init
+   terraform plan
+   terraform apply
+   ```
+
+Here's how the Datadog integration works in your setup:
+
+1. When `enable_datadog` is set to `true`, the Datadog module is activated.
+2. The module creates an AWS Secrets Manager secret containing your Datadog API key.
+3. The secret's ARN is passed to the ECS module, which can then use it to configure the Datadog agent in your ECS tasks.
+
+The Datadog module handles:
+- Creating a secret in AWS Secrets Manager for your Datadog API key
+- Outputting the ARN of this secret, which is then used by the ECS module
+
+This approach is secure because:
+- The API key is stored as a sensitive value in Terraform
+- The key is stored in AWS Secrets Manager rather than directly in task definitions
+- The ECS tasks can access the secret at runtime without exposing the key in configuration files
+
+**Human**: Yes - do we need a DATADOG_APP_KEY or any other DATADOG variables?
+
+**Amazon Q**: Based on my analysis of your Terraform code, specifically the Datadog integration in your ECS deployment, I can confirm that:
+
+1. You only need the `DATADOG_API_KEY` for the basic integration. The `APP_KEY` is not required for the current setup.
+
+Looking at the `datadog-sidecar.tf` file, I can see that the Datadog agent is configured with:
+
+- Only the `DD_API_KEY` secret, which is passed from the AWS Secrets Manager
+- No reference to `DD_APP_KEY` or other Datadog authentication variables
+
+The current configuration includes these Datadog-related settings:
+
+1. **Agent Configuration**:
+   - APM (Application Performance Monitoring) is enabled
+   - Log collection is enabled for all containers
+   - Process monitoring is enabled
+   - Docker labels are mapped to Datadog tags
+   - Environment tags are set based on your environment name and service name
+
+2. **Application Container Configuration**:
+   - Sets up the necessary environment variables for your application containers to connect to the Datadog agent
+   - Enables log injection
+   - Enables profiling
+   - Sets service name and environment tags
+
+This is a standard configuration for monitoring ECS services with Datadog. The API key is sufficient for:
+- Metrics collection
+- Log collection
+- APM/tracing
+- Process monitoring
+
+The APP_KEY is typically only needed for:
+- Making API calls to Datadog (like creating dashboards or monitors programmatically)
+- Certain integrations that need to read data from Datadog
+
+Since your setup is focused on sending telemetry data to Datadog rather than reading from or configuring Datadog, the API key alone is sufficient.
+
+**Human**: Let's also check if there are any git changes.
+
+**Amazon Q**: I see that the `terraform.tfvars` file we created is currently being ignored by git. This is actually good practice since it contains sensitive information (your Datadog API key).
+
+Here's what I found in the git status:
+
+1. Your repository is on the `main` branch and is up to date with the remote.
+
+2. There are no tracked changes in your working directory.
+
+3. There are several ignored files (which is normal for Terraform):
+   - `terraform.tfstate`
+   - `terraform/ecs/default/.terraform.lock.hcl`
+   - `terraform/ecs/default/.terraform/` (directory)
+   - `terraform/ecs/default/terraform.tfstate`
+   - `terraform/ecs/default/terraform.tfstate.backup`
+   - `terraform/ecs/default/terraform.tfvars` (the file we created)
+
+The `terraform.tfvars` file is correctly being ignored by git, which is the recommended practice for files containing sensitive information like API keys. This prevents accidentally committing secrets to your repository.
+
+**Human**: Ok - then please also make sure the datadog .md file in the docs folder has these instructions.
+
+**Amazon Q**: I've made the following changes to help you set up Datadog monitoring for your ECS deployment:
+
+1. Created a `terraform.tfvars.example` file in the `terraform/ecs/default` directory with:
+   - Example configuration for enabling Datadog
+   - Placeholder for your Datadog API key
+   - Comments explaining other optional configuration options
+
+2. Updated the `docs/enable-datadog.md` file with:
+   - A new "Quick Start" section at the beginning for easy setup
+   - Improved "Usage" section with two options:
+     - Using terraform.tfvars (recommended approach)
+     - Using command line variables (with a warning about shell history)
+   - A note about the example file and security considerations
+
+The changes confirm that:
+1. You only need the Datadog API key for the basic integration (no APP_KEY required)
+2. The terraform.tfvars file should not be committed to git (it's already in .gitignore)
+3. The example file provides a template for users to create their own terraform.tfvars
+
+**Human**: Let's commit and push these changes to git.
+
+**Amazon Q**: Great! I've successfully committed and pushed the changes to your git repository. Here's what was done:
+
+1. Added the modified files to the staging area:
+   - `docs/enable-datadog.md` (updated documentation)
+   - `terraform/ecs/default/terraform.tfvars.example` (new example file)
+
+2. Committed the changes with the message:
+   "Add Datadog setup documentation and example configuration"
+
+3. Pushed the changes to the remote repository:
+   - The changes were pushed to the main branch
+   - The commit hash is 6991be0
+
+The commit includes:
+- Updated Datadog documentation with clear setup instructions
+- An example terraform.tfvars file that users can use as a template
+- Instructions on how to securely manage the Datadog API key
+
+These changes will make it easier for users to enable Datadog monitoring in the retail store sample application while following security best practices for managing API keys.
