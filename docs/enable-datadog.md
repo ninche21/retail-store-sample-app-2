@@ -288,3 +288,240 @@ If you encounter issues:
 2. Verify that the API key is correctly stored and accessible
 3. Ensure that the application containers can communicate with the Datadog Agent on localhost:8126
 4. Check that the language-specific instrumentation is correctly configured
+
+## Implementation Details
+
+The following sections provide details about the actual implementation that has been added to the repository.
+
+### Datadog Module
+
+A new Terraform module has been created in `terraform/lib/datadog/` to handle the Datadog API key storage:
+
+```terraform
+# terraform/lib/datadog/main.tf
+variable "environment_name" {
+  description = "Name of the environment"
+  type        = string
+}
+
+variable "datadog_api_key" {
+  description = "Datadog API key"
+  type        = string
+  sensitive   = true
+}
+
+variable "tags" {
+  description = "Tags to apply to resources"
+  type        = map(string)
+  default     = {}
+}
+
+# Create a secret for the Datadog API key
+resource "aws_secretsmanager_secret" "datadog_api_key" {
+  name        = "${var.environment_name}-datadog-api-key"
+  description = "Datadog API key for ${var.environment_name} environment"
+  tags        = var.tags
+}
+
+resource "aws_secretsmanager_secret_version" "datadog_api_key" {
+  secret_id     = aws_secretsmanager_secret.datadog_api_key.id
+  secret_string = var.datadog_api_key
+}
+
+output "datadog_api_key_arn" {
+  description = "ARN of the Datadog API key secret"
+  value       = aws_secretsmanager_secret.datadog_api_key.arn
+}
+```
+
+### ECS Service Module Updates
+
+The ECS service module has been updated to support Datadog integration:
+
+1. Added variables for Datadog configuration:
+
+```terraform
+# terraform/lib/ecs/service/variables.tf
+variable "enable_datadog" {
+  description = "Enable Datadog integration"
+  type        = bool
+  default     = false
+}
+
+variable "datadog_api_key_arn" {
+  description = "ARN of the Datadog API key secret"
+  type        = string
+  default     = ""
+}
+```
+
+2. Created a separate file for Datadog sidecar configuration:
+
+```terraform
+# terraform/lib/ecs/service/datadog-sidecar.tf
+locals {
+  # Only add Datadog sidecar if enabled
+  datadog_container_definition = var.enable_datadog ? jsonencode([{
+    "name": "datadog-agent",
+    "image": "public.ecr.aws/datadog/agent:latest",
+    "essential": true,
+    "environment": [
+      {
+        "name": "DD_APM_ENABLED",
+        "value": "true"
+      },
+      {
+        "name": "DD_APM_NON_LOCAL_TRAFFIC",
+        "value": "true"
+      },
+      {
+        "name": "DD_LOGS_ENABLED",
+        "value": "true"
+      },
+      {
+        "name": "DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL",
+        "value": "true"
+      },
+      {
+        "name": "DD_PROCESS_AGENT_ENABLED",
+        "value": "true"
+      },
+      {
+        "name": "DD_DOCKER_LABELS_AS_TAGS",
+        "value": "{\"com.amazonaws.ecs.task-definition-family\":\"service_name\"}"
+      },
+      {
+        "name": "DD_TAGS",
+        "value": "env:${var.environment_name} service:${var.service_name}"
+      },
+      {
+        "name": "ECS_FARGATE",
+        "value": "true"
+      }
+    ],
+    "secrets": [
+      {
+        "name": "DD_API_KEY",
+        "valueFrom": var.datadog_api_key_arn
+      }
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "${var.cloudwatch_logs_group_id}",
+        "awslogs-region": "${data.aws_region.current.name}",
+        "awslogs-stream-prefix": "${var.service_name}-datadog-agent"
+      }
+    },
+    "portMappings": [
+      {
+        "containerPort": 8126,
+        "hostPort": 8126,
+        "protocol": "tcp"
+      }
+    ]
+  }]) : "[]"
+
+  # Add Datadog environment variables to application container if enabled
+  datadog_app_environment = var.enable_datadog ? [
+    {
+      "name": "DD_AGENT_HOST",
+      "value": "localhost"
+    },
+    {
+      "name": "DD_TRACE_AGENT_PORT",
+      "value": "8126"
+    },
+    {
+      "name": "DD_SERVICE_NAME",
+      "value": "${var.service_name}"
+    },
+    {
+      "name": "DD_ENV",
+      "value": "${var.environment_name}"
+    },
+    {
+      "name": "DD_LOGS_INJECTION",
+      "value": "true"
+    },
+    {
+      "name": "DD_PROFILING_ENABLED",
+      "value": "true"
+    }
+  ] : []
+}
+```
+
+3. Updated the ECS task definition to include the Datadog Agent:
+
+```terraform
+# terraform/lib/ecs/service/ecs.tf
+resource "aws_ecs_task_definition" "this" {
+  # ...existing configuration...
+  
+  container_definitions = <<DEFINITION
+    [
+      {
+        "name": "application",
+        "image": "${var.container_image}",
+        # ...existing configuration...
+        "dependsOn": ${var.enable_datadog ? "[{\"containerName\": \"datadog-agent\", \"condition\": \"START\"}]" : "[]"}
+      }
+      ${var.enable_datadog ? ",${substr(local.datadog_container, 1, length(local.datadog_container) - 2)}" : ""}
+    ]
+  DEFINITION
+  
+  # ...rest of configuration...
+}
+```
+
+### ECS Default Module Updates
+
+The ECS default module has been updated to support Datadog integration:
+
+1. Added variables for Datadog configuration:
+
+```terraform
+# terraform/ecs/default/variables.tf
+variable "enable_datadog" {
+  description = "Enable Datadog integration"
+  type        = bool
+  default     = false
+}
+
+variable "datadog_api_key" {
+  description = "Datadog API key"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+```
+
+2. Added the Datadog module instantiation:
+
+```terraform
+# terraform/ecs/default/main.tf
+module "datadog" {
+  count  = var.enable_datadog ? 1 : 0
+  source = "../../lib/datadog"
+  
+  environment_name = var.environment_name
+  datadog_api_key  = var.datadog_api_key
+  tags             = module.tags.result
+}
+```
+
+3. Updated the retail app ECS module to pass Datadog configuration:
+
+```terraform
+# terraform/ecs/default/main.tf
+module "retail_app_ecs" {
+  # ...existing configuration...
+  
+  # Datadog configuration
+  enable_datadog     = var.enable_datadog
+  datadog_api_key_arn = var.enable_datadog ? module.datadog[0].datadog_api_key_arn : ""
+}
+```
+
+With these changes, the retail store sample application can now be deployed with Datadog monitoring enabled by setting the `enable_datadog` and `datadog_api_key` variables.
