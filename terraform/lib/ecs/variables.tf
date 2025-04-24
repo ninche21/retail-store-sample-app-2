@@ -124,3 +124,16 @@ variable "mq_password" {
   type        = string
   description = "Password for the shared MQ"
 }
+
+# Datadog integration variables
+variable "enable_datadog" {
+  description = "Enable Datadog integration"
+  type        = bool
+  default     = false
+}
+
+variable "datadog_api_key_arn" {
+  description = "ARN of the Datadog API key secret"
+  type        = string
+  default     = ""
+}

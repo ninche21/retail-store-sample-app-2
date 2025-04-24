@@ -12,6 +12,15 @@ module "vpc" {
   tags = module.tags.result
 }
 
+module "datadog" {
+  count  = var.enable_datadog ? 1 : 0
+  source = "../../lib/datadog"
+  
+  environment_name = var.environment_name
+  datadog_api_key  = var.datadog_api_key
+  tags             = module.tags.result
+}
+
 module "dependencies" {
   source = "../../lib/dependencies"
 
@@ -57,4 +66,8 @@ module "retail_app_ecs" {
   mq_endpoint = module.dependencies.mq_broker_endpoint
   mq_username = module.dependencies.mq_user
   mq_password = module.dependencies.mq_password
+  
+  # Datadog configuration
+  enable_datadog     = var.enable_datadog
+  datadog_api_key_arn = var.enable_datadog ? module.datadog[0].datadog_api_key_arn : ""
 }

@@ -79,3 +79,15 @@ variable "alb_target_group_arn" {
   default     = ""
   type        = string
 }
+
+variable "enable_datadog" {
+  description = "Enable Datadog integration"
+  type        = bool
+  default     = false
+}
+
+variable "datadog_api_key_arn" {
+  description = "ARN of the Datadog API key secret"
+  type        = string
+  default     = ""
+}

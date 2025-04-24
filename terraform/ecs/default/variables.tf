@@ -19,3 +19,17 @@ variable "container_image_overrides" {
   description = "Object that encapsulates any overrides to default values"
 }
 
+# Datadog integration variables
+variable "enable_datadog" {
+  description = "Enable Datadog integration"
+  type        = bool
+  default     = false
+}
+
+variable "datadog_api_key" {
+  description = "Datadog API key"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
