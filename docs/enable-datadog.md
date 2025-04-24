@@ -11,6 +11,30 @@ The retail store sample application consists of multiple microservices deployed 
 3. Configure the application containers to send metrics, logs, and traces to Datadog
 4. Update IAM permissions to allow access to the Datadog API key
 
+## Quick Start
+
+The Terraform configuration already includes Datadog integration, but it's disabled by default. To enable it:
+
+1. Create a `terraform.tfvars` file in the `terraform/ecs/default` directory:
+
+```
+enable_datadog = true
+datadog_api_key = "YOUR_DATADOG_API_KEY"
+```
+
+2. Replace `YOUR_DATADOG_API_KEY` with your actual Datadog API key.
+
+3. Apply the Terraform configuration:
+
+```bash
+cd terraform/ecs/default
+terraform init
+terraform plan
+terraform apply
+```
+
+Note: The `terraform.tfvars` file contains sensitive information and is ignored by git. Do not commit this file to your repository.
+
 ## Implementation Steps
 
 ### 1. Store Datadog API Key in AWS Secrets Manager
@@ -268,9 +292,32 @@ const tracer = require('dd-trace').init({
 
 To deploy the application with Datadog enabled:
 
+### Option 1: Using terraform.tfvars (Recommended)
+
+1. Create a `terraform.tfvars` file in the `terraform/ecs/default` directory:
+
+```
+enable_datadog = true
+datadog_api_key = "YOUR_DATADOG_API_KEY"
+```
+
+2. Apply the Terraform configuration:
+
+```bash
+terraform init
+terraform plan
+terraform apply
+```
+
+Note: A `terraform.tfvars.example` file is provided as a template. Copy it to `terraform.tfvars` and update with your actual values.
+
+### Option 2: Using Command Line Variables
+
 ```bash
 terraform apply -var="enable_datadog=true" -var="datadog_api_key=YOUR_DATADOG_API_KEY"
 ```
+
+Note: This approach may expose your API key in shell history.
 
 ## Verification
 
