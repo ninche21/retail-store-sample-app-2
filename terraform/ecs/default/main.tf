@@ -1,13 +1,13 @@
 module "tags" {
   source = "../../lib/tags"
 
-  environment_name = var.environment_name
+  environment_name = local.full_environment_name
 }
 
 module "vpc" {
   source = "../../lib/vpc"
 
-  environment_name = var.environment_name
+  environment_name = local.full_environment_name
 
   tags = module.tags.result
 }
@@ -16,7 +16,7 @@ module "datadog" {
   count  = var.enable_datadog ? 1 : 0
   source = "../../lib/datadog"
   
-  environment_name = var.environment_name
+  environment_name = local.full_environment_name
   datadog_api_key  = var.datadog_api_key
   tags             = module.tags.result
 }
@@ -24,7 +24,7 @@ module "datadog" {
 module "dependencies" {
   source = "../../lib/dependencies"
 
-  environment_name = var.environment_name
+  environment_name = local.full_environment_name
   tags             = module.tags.result
 
   vpc_id     = module.vpc.inner.vpc_id
@@ -38,7 +38,7 @@ module "dependencies" {
 module "retail_app_ecs" {
   source = "../../lib/ecs"
 
-  environment_name          = var.environment_name
+  environment_name          = local.full_environment_name
   vpc_id                    = module.vpc.inner.vpc_id
   subnet_ids                = module.vpc.inner.private_subnets
   public_subnet_ids         = module.vpc.inner.public_subnets
