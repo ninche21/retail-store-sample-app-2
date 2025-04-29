@@ -20,4 +20,8 @@ module "checkout_service" {
   additional_task_role_iam_policy_arns = [
     var.carts_dynamodb_policy_arn
   ]
+  
+  # Datadog configuration
+  enable_datadog     = local.datadog_enabled
+  datadog_api_key_arn = var.datadog_api_key_arn
 }

@@ -25,6 +25,55 @@ module "catalog_service" {
   additional_task_execution_role_iam_policy_arns = [
     aws_iam_policy.catalog_policy.arn
   ]
+  
+  # Datadog configuration
+  enable_datadog     = local.datadog_enabled
+  datadog_api_key_arn = var.datadog_api_key_arn
+}
+
+data "aws_iam_policy_document" "catalog_db_secret" {
+  statement {
+    sid = ""
+    actions = [
+      "secretsmanager:GetSecretValue",
+      "kms:Decrypt*"
+    ]
+    effect = "Allow"
+    resources = [
+      aws_secretsmanager_secret.catalog_db.arn,
+      aws_kms_key.cmk.arn
+    ]
+  }
+}
+
+resource "aws_iam_policy" "catalog_policy" {
+  name        = "${var.environment_name}-catalog"
+  path        = "/"
+  description = "Policy for catalog"
+
+  policy = data.aws_iam_policy_document.catalog_db_secret.json
+}
+
+resource "random_string" "random_catalog_secret" {
+  length  = 4
+  special = false
+}
+
+resource "aws_secretsmanager_secret" "catalog_db" {
+  name       = "${var.environment_name}-catalog-db-${random_string.random_catalog_secret.result}"
+  kms_key_id = aws_kms_key.cmk.key_id
+}
+
+resource "aws_secretsmanager_secret_version" "catalog_db" {
+  secret_id = aws_secretsmanager_secret.catalog_db.id
+
+  secret_string = jsonencode(
+    {
+      username = var.catalog_db_username
+      password = var.catalog_db_password
+      host     = "${var.catalog_db_endpoint}:${var.catalog_db_port}"
+    }
+  )
 }
 
 data "aws_iam_policy_document" "catalog_db_secret" {

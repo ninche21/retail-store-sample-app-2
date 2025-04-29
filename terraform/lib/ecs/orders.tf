@@ -31,6 +31,55 @@ module "orders_service" {
   additional_task_execution_role_iam_policy_arns = [
     aws_iam_policy.orders_policy.arn
   ]
+  
+  # Datadog configuration
+  enable_datadog     = local.datadog_enabled
+  datadog_api_key_arn = var.datadog_api_key_arn
+}
+
+data "aws_iam_policy_document" "orders_db_secret" {
+  statement {
+    sid = ""
+    actions = [
+      "secretsmanager:GetSecretValue",
+      "kms:Decrypt*"
+    ]
+    effect = "Allow"
+    resources = [
+      aws_secretsmanager_secret.orders_db.arn,
+      aws_secretsmanager_secret.mq.arn,
+      aws_kms_key.cmk.arn
+    ]
+  }
+}
+
+resource "aws_iam_policy" "orders_policy" {
+  name        = "${var.environment_name}-orders"
+  path        = "/"
+  description = "Policy for orders"
+
+  policy = data.aws_iam_policy_document.orders_db_secret.json
+}
+
+resource "random_string" "random_orders_secret" {
+  length  = 4
+  special = false
+}
+
+resource "aws_secretsmanager_secret" "orders_db" {
+  name = "${var.environment_name}-orders-db-${random_string.random_orders_secret.result}"
+}
+
+resource "aws_secretsmanager_secret_version" "orders_db" {
+  secret_id = aws_secretsmanager_secret.orders_db.id
+
+  secret_string = jsonencode(
+    {
+      username = var.orders_db_username
+      password = var.orders_db_password
+      host     = "${var.orders_db_endpoint}:${var.orders_db_port}"
+    }
+  )
 }
 
 data "aws_iam_policy_document" "orders_db_secret" {
