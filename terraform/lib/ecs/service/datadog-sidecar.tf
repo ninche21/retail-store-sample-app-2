@@ -2,7 +2,7 @@ locals {
   # Only add Datadog sidecar if enabled
   datadog_container_definition = var.enable_datadog ? jsonencode([{
     "name": "datadog-agent",
-    "image": "public.ecr.aws/datadog/agent:latest",
+    "image": "public.ecr.aws/datadog/agent:7",  # Using a specific version instead of latest
     "essential": true,
     "environment": [
       {
