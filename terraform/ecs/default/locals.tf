@@ -1,3 +1,3 @@
 locals {
-  full_environment_name = var.environment_name
+  # Custom local variables can be defined here
 }
