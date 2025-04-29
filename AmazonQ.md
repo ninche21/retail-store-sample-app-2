@@ -317,3 +317,41 @@ The commit includes:
 - Instructions on how to securely manage the Datadog API key
 
 These changes will make it easier for users to enable Datadog monitoring in the retail store sample application while following security best practices for managing API keys.
+## Implementing Datadog Integration for ECS Task Definitions
+
+**Human**: I'm not seeing any logs in Datadog for our "fibonacci" deployment in us-east-1. What could be causing this issue?
+
+**Amazon Q**: After examining your ECS deployment, I found that while Datadog is enabled in your terraform.tfvars file, the Datadog agent is not being properly included in your task definitions. Here's what I discovered and fixed:
+
+1. **Issue Identified**: 
+   - The terraform.tfvars file correctly had `enable_datadog = true` and a Datadog API key
+   - However, the Datadog agent sidecar container was not being added to the task definitions
+   - Logs were going to CloudWatch but not being forwarded to Datadog
+
+2. **Changes Implemented**:
+   - Updated all service modules (carts, catalog, checkout, orders, ui) to include Datadog configuration
+   - Added `enable_datadog` and `datadog_api_key_arn` parameters to all service modules
+   - Ensured the Datadog agent sidecar container is included in task definitions when Datadog is enabled
+   - Configured the agent to collect logs, metrics, and traces from all containers
+   - Added proper service tagging for identification in Datadog dashboards
+
+3. **Configuration Details**:
+   - The Datadog agent is configured with:
+     - APM (Application Performance Monitoring) enabled
+     - Log collection enabled for all containers
+     - Process monitoring enabled
+     - Docker labels mapped to Datadog tags
+     - Environment tags based on environment name and service name
+
+   - Application containers are configured with:
+     - Connection to the Datadog agent via localhost
+     - Service name and environment tags
+     - Log injection enabled
+     - Profiling enabled
+
+4. **Results**:
+   - All ECS task definitions now properly include the Datadog agent when enabled
+   - Logs, metrics, and traces are sent directly to Datadog
+   - Services are properly tagged for filtering in Datadog dashboards
+
+These changes ensure that when the application is deployed with `enable_datadog = true` in the terraform.tfvars file, all services will have the Datadog agent properly configured and will send telemetry data to Datadog.
