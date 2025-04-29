@@ -19,6 +19,30 @@ resource "aws_iam_role_policy_attachment" "task_execution_role_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
 }
 
+# Add policy to allow access to Datadog API key in Secrets Manager
+resource "aws_iam_policy" "datadog_secrets_access" {
+  count       = var.enable_datadog ? 1 : 0
+  name        = "${var.environment_name}-datadog-secrets-access"
+  description = "Allow access to Datadog API key in Secrets Manager"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "secretsmanager:GetSecretValue"
+        Resource = var.datadog_api_key_arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "datadog_secrets_access" {
+  count      = var.enable_datadog ? 1 : 0
+  role       = aws_iam_role.task_execution_role.name
+  policy_arn = aws_iam_policy.datadog_secrets_access[0].arn
+}
+
 resource "aws_iam_role" "task_role" {
   name               = "${var.environment_name}-task"
   assume_role_policy = data.aws_iam_policy_document.assume_role_policy.json
