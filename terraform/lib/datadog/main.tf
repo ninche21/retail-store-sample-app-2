@@ -15,6 +15,18 @@ variable "tags" {
   default     = {}
 }
 
+variable "datadog_integration_role_name" {
+  description = "Name of the Datadog integration IAM role"
+  type        = string
+  default     = "DatadogIntegrationRole"
+}
+
+variable "datadog_forwarder_lambda_arn" {
+  description = "ARN of the Datadog Forwarder Lambda function"
+  type        = string
+  default     = ""
+}
+
 # Create a secret for the Datadog API key
 resource "aws_secretsmanager_secret" "datadog_api_key" {
   name        = "${var.environment_name}-datadog-api-key"
@@ -25,6 +37,13 @@ resource "aws_secretsmanager_secret" "datadog_api_key" {
 resource "aws_secretsmanager_secret_version" "datadog_api_key" {
   secret_id     = aws_secretsmanager_secret.datadog_api_key.id
   secret_string = var.datadog_api_key
+}
+
+# Attach CloudWatchLogsReadOnlyAccess policy to the Datadog integration role
+resource "aws_iam_role_policy_attachment" "datadog_cloudwatch_logs" {
+  count      = var.datadog_integration_role_name != "" ? 1 : 0
+  role       = var.datadog_integration_role_name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsReadOnlyAccess"
 }
 
 output "datadog_api_key_arn" {

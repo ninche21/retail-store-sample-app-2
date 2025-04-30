@@ -19,6 +19,10 @@ module "datadog" {
   environment_name = local.full_environment_name
   datadog_api_key  = var.datadog_api_key
   tags             = module.tags.result
+  
+  # Datadog integration role and forwarder configuration
+  datadog_integration_role_name = var.datadog_integration_role_name
+  datadog_forwarder_lambda_arn  = var.datadog_forwarder_lambda_arn
 }
 
 module "dependencies" {
@@ -68,6 +72,7 @@ module "retail_app_ecs" {
   mq_password = module.dependencies.mq_password
   
   # Datadog configuration
-  enable_datadog     = var.enable_datadog
-  datadog_api_key_arn = var.enable_datadog ? module.datadog[0].datadog_api_key_arn : ""
+  enable_datadog           = var.enable_datadog
+  datadog_api_key_arn      = var.enable_datadog ? module.datadog[0].datadog_api_key_arn : ""
+  datadog_forwarder_lambda_arn = var.datadog_forwarder_lambda_arn
 }

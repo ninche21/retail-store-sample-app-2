@@ -33,3 +33,15 @@ variable "datadog_api_key" {
   sensitive   = true
 }
 
+variable "datadog_integration_role_name" {
+  description = "Name of the Datadog integration IAM role"
+  type        = string
+  default     = "DatadogIntegrationRole"
+}
+
+variable "datadog_forwarder_lambda_arn" {
+  description = "ARN of the Datadog Forwarder Lambda function"
+  type        = string
+  default     = "arn:aws:lambda:us-east-1:347830095179:function:DatadogIntegration-ForwarderStack-YU7W1O-Forwarder-LcxelJJBiCQ4"
+}
+

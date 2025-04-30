@@ -1,18 +1,7 @@
-# Example terraform.tfvars file
-# Copy this file to terraform.tfvars and replace the values with your own
+environment_name = "retail-store-ecs"
 
-# Set to true to enable Datadog integration
+# Datadog integration settings
 enable_datadog = true
-
-# Your Datadog API key (required if enable_datadog is true)
-datadog_api_key = "YOUR_DATADOG_API_KEY"
-
-# Optional: Override the default environment name
-# environment_name = "my-retail-store"
-
-# Optional: Override container images
-# container_image_overrides = {
-#   default_repository = "my-repo"
-#   default_tag = "latest"
-#   ui = "my-repo/ui:v1.0.0"
-# }
+datadog_api_key = "your_datadog_api_key_here"
+datadog_integration_role_name = "DatadogIntegrationRole"
+datadog_forwarder_lambda_arn = "arn:aws:lambda:us-east-1:347830095179:function:DatadogIntegration-ForwarderStack-YU7W1O-Forwarder-LcxelJJBiCQ4"

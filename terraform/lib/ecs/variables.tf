@@ -137,3 +137,9 @@ variable "datadog_api_key_arn" {
   type        = string
   default     = ""
 }
+
+variable "datadog_forwarder_lambda_arn" {
+  description = "ARN of the Datadog Forwarder Lambda function"
+  type        = string
+  default     = ""
+}
