@@ -167,11 +167,6 @@ resource "aws_ecs_service" "this" {
     create = "40m"
   }
 
-  # Increase timeout for service creation
-  timeouts {
-    create = "40m"
-  }
-
   network_configuration {
     security_groups  = [aws_security_group.this.id]
     subnets          = var.subnet_ids
