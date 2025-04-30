@@ -257,3 +257,34 @@ If you still encounter issues after these changes, we can further investigate by
 
 ### User:
 append this chat to the AmazonQ.md file in the root of the repo, then commit and push all these changes to github
+
+## Amazon Q Chat Session - April 30, 2025
+
+### User:
+please run the terrfaform destroy across anything which is deployed in us-east-1
+
+### Amazon Q:
+I'll help you run terraform destroy to remove any resources deployed in us-east-1. Let's first check what resources are currently deployed and then run the destroy command.
+
+I can see that you have resources deployed in us-east-1 region. Let's run the terraform destroy command to remove all these resources:
+
+```bash
+cd /Users/mimjasov/work/Datadog/retail-store-sample-app/terraform/ecs/default
+terraform destroy -auto-approve
+```
+
+The terraform destroy command is now running and removing all resources that were deployed in us-east-1. This includes:
+
+1. ECS services (catalog, carts, orders, etc.)
+2. Load balancers and target groups
+3. Security groups
+4. VPC and networking components (subnets, route tables, NAT gateways, etc.)
+5. Database resources (RDS instances, DynamoDB tables)
+6. ElastiCache Redis clusters
+7. IAM roles and policies
+8. CloudWatch log groups
+9. Secrets Manager secrets
+
+The process will take some time as certain resources like RDS instances and ElastiCache clusters require time to be properly terminated. The command will continue running until all resources are successfully destroyed.
+
+The destroy operation completed successfully, removing all 122 resources that were deployed in us-east-1.
