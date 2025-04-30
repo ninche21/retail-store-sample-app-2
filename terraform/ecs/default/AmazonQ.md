@@ -288,3 +288,83 @@ The terraform destroy command is now running and removing all resources that wer
 The process will take some time as certain resources like RDS instances and ElastiCache clusters require time to be properly terminated. The command will continue running until all resources are successfully destroyed.
 
 The destroy operation completed successfully, removing all 122 resources that were deployed in us-east-1.
+
+## Amazon Q Chat Session - April 30, 2025
+
+### User:
+why aren't the cloudwatch logs flowing through into Datadog in this project? The Datadog AWS integration is installed into the AWS account, each Fargate contain is configured to use the Datadog sidecar. I'm able to view the ECS cluster, tasks, services and jobs - but do not see any logs or traces
+
+### Amazon Q:
+I understand that we need to keep Datadog integration. Let's modify our approach to fix the deployment issues while maintaining the Datadog functionality.
+
+After examining your AWS configuration, I've identified the issue with CloudWatch logs not flowing into Datadog. Here's what I found:
+
+1. **IAM Role Permissions Issue**: 
+   - The DatadogIntegrationRole only has the SecurityAudit policy attached
+   - While this policy includes `logs:Describe*` and `logs:ListTagsForResource`, it doesn't include the necessary permissions for log collection
+   - The role is missing critical permissions like `logs:FilterLogEvents` and `logs:GetLogEvents` which are required to read the actual log content
+
+2. **Missing Log Forwarder Configuration**:
+   - I don't see any CloudWatch Logs integrations configured in your account
+   - The Datadog Forwarder Lambda function appears to be installed (`DatadogIntegration-ForwarderStack-YU7W1O-Forwarder-LcxelJJBiCQ4`), but it's not properly configured to collect logs
+
+3. **ECS Log Groups Exist**: 
+   - I can see the ECS log group `retail-store-ecs-fermat-tasks` which should contain your application logs
+   - However, there's no mechanism to forward these logs to Datadog
+
+To fix this issue:
+
+1. **Update the IAM Role Permissions**:
+   - Add the CloudWatchLogsReadOnlyAccess policy to the DatadogIntegrationRole
+   - Or create a custom policy with these permissions:
+     ```json
+     {
+       "Version": "2012-10-17",
+       "Statement": [
+         {
+           "Effect": "Allow",
+           "Action": [
+             "logs:FilterLogEvents",
+             "logs:GetLogEvents",
+             "logs:StartQuery",
+             "logs:StopQuery",
+             "logs:GetQueryResults"
+           ],
+           "Resource": "*"
+         }
+       ]
+     }
+     ```
+
+2. **Configure the Datadog Forwarder**:
+   - Make sure the Datadog Forwarder Lambda is subscribed to your ECS log groups
+   - You can do this by adding a subscription filter to your log groups that points to the Datadog Forwarder Lambda
+
+3. **Verify Datadog AWS Integration Settings**:
+   - In the Datadog AWS Integration page, ensure that:
+     - Log collection is enabled
+     - The log groups pattern includes your ECS log groups (e.g., `retail-store-ecs*`)
+     - The correct AWS account and regions are selected
+
+### User:
+yes - let's update with all these recommendations
+
+### Amazon Q:
+I'll help you implement all the recommendations to fix the CloudWatch logs not flowing into Datadog. Let's start with updating the IAM role permissions, configuring the Datadog Forwarder, and verifying the Datadog AWS integration settings.
+
+1. **Updated IAM Role Permissions**:
+   - Successfully attached the CloudWatchLogsReadOnlyAccess policy to the DatadogIntegrationRole
+   - This provides the necessary permissions for Datadog to read CloudWatch logs
+
+2. **Configured the Datadog Forwarder**:
+   - Added a subscription filter to the retail-store-ecs-fermat-tasks log group
+   - The filter forwards all logs to the Datadog Forwarder Lambda function
+   - Added the necessary Lambda permission to allow CloudWatch Logs to invoke the Forwarder
+
+3. **Next Steps for Datadog AWS Integration**:
+   - Log into your Datadog account and navigate to the AWS Integration page
+   - Verify that log collection is enabled for your AWS account
+   - Add or verify that the log group pattern includes `retail-store-ecs*`
+   - If needed, force a refresh of the integration
+
+The changes have been successfully implemented. You should start seeing your ECS logs flowing into Datadog within a few minutes. If logs still don't appear after 15-20 minutes, you may need to check the Datadog Forwarder Lambda logs for any errors or issues.
