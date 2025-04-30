@@ -42,6 +42,6 @@ variable "datadog_integration_role_name" {
 variable "datadog_forwarder_lambda_arn" {
   description = "ARN of the Datadog Forwarder Lambda function"
   type        = string
-  default     = "arn:aws:lambda:us-east-1:347830095179:function:DatadogIntegration-ForwarderStack-YU7W1O-Forwarder-LcxelJJBiCQ4"
+  # No default - this should be provided by the user when enable_datadog is true
 }
 

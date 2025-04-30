@@ -4,4 +4,5 @@ environment_name = "retail-store-ecs"
 enable_datadog = true
 datadog_api_key = "your_datadog_api_key_here"
 datadog_integration_role_name = "DatadogIntegrationRole"
-datadog_forwarder_lambda_arn = "arn:aws:lambda:us-east-1:347830095179:function:DatadogIntegration-ForwarderStack-YU7W1O-Forwarder-LcxelJJBiCQ4"
+# Replace with your actual Datadog Forwarder Lambda ARN
+datadog_forwarder_lambda_arn = "arn:aws:lambda:us-east-1:YOUR_ACCOUNT_ID:function:datadog-forwarder"

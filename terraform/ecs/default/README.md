@@ -46,7 +46,7 @@ This module supports integration with Datadog for monitoring and observability. 
 2. Provide your Datadog API key as `datadog_api_key = "your-api-key"`
 3. Ensure the Datadog AWS integration is installed in your AWS account
 4. Specify the Datadog integration role name (default is "DatadogIntegrationRole")
-5. Provide the ARN of the Datadog Forwarder Lambda function
+5. Provide the ARN of the Datadog Forwarder Lambda function as `datadog_forwarder_lambda_arn`
 
 ### Datadog AWS Integration Setup
 
@@ -73,13 +73,15 @@ This section documents the variables and outputs of the Terraform configuration.
 
 ### Inputs
 
-| Name                        | Description                                                          | Type     | Default                                                                                                | Required |
-| --------------------------- | -------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------ | :------: |
-| `environment_name`          | Name of the environment which will be used for all resources created | `string` | `retail-store-ecs`                                                                                     |    no    |
-| `enable_datadog`            | Enable Datadog integration                                           | `bool`   | `false`                                                                                                |    no    |
-| `datadog_api_key`           | Datadog API key                                                      | `string` | `""`                                                                                                   |    no    |
-| `datadog_integration_role_name` | Name of the Datadog integration IAM role                         | `string` | `"DatadogIntegrationRole"`                                                                             |    no    |
-| `datadog_forwarder_lambda_arn` | ARN of the Datadog Forwarder Lambda function                      | `string` | `"arn:aws:lambda:us-east-1:347830095179:function:DatadogIntegration-ForwarderStack-YU7W1O-Forwarder-LcxelJJBiCQ4"` |    no    |
+| Name                        | Description                                                          | Type     | Default                    | Required |
+| --------------------------- | -------------------------------------------------------------------- | -------- | -------------------------- | :------: |
+| `environment_name`          | Name of the environment which will be used for all resources created | `string` | `retail-store-ecs`         |    no    |
+| `enable_datadog`            | Enable Datadog integration                                           | `bool`   | `false`                    |    no    |
+| `datadog_api_key`           | Datadog API key                                                      | `string` | `""`                       |    no    |
+| `datadog_integration_role_name` | Name of the Datadog integration IAM role                         | `string` | `"DatadogIntegrationRole"` |    no    |
+| `datadog_forwarder_lambda_arn` | ARN of the Datadog Forwarder Lambda function                      | `string` | -                          |   yes*   |
+
+*Required when `enable_datadog` is set to `true`
 
 ### Outputs
 
