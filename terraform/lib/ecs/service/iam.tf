@@ -14,9 +14,39 @@ data "aws_iam_policy_document" "assume_role_policy" {
   }
 }
 
+# Create a policy to allow access to Secrets Manager
+resource "aws_iam_policy" "secrets_manager_access" {
+  # Remove the conditional count to avoid dependency issues
+  name        = "${var.environment_name}-${var.service_name}-secrets-access"
+  path        = "/"
+  description = "Policy to allow access to Secrets Manager for Datadog API key"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue"
+        ]
+        Resource = [
+          "*"  # Allow access to all secrets for now to simplify deployment
+        ]
+      }
+    ]
+  })
+}
+
 resource "aws_iam_role_policy_attachment" "task_execution_role_policy" {
   role       = aws_iam_role.task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+}
+
+# Attach the Secrets Manager access policy to the task execution role
+resource "aws_iam_role_policy_attachment" "secrets_manager_access" {
+  # Remove the conditional count to avoid dependency issues
+  role       = aws_iam_role.task_execution_role.name
+  policy_arn = aws_iam_policy.secrets_manager_access.arn
 }
 
 resource "aws_iam_role_policy_attachment" "task_execution_role_additional" {
