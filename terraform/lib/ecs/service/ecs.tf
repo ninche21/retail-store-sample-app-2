@@ -158,6 +158,10 @@ resource "aws_ecs_service" "this" {
   cluster                = var.cluster_arn
   task_definition        = aws_ecs_task_definition.this.arn
   desired_count          = 1
+  
+  timeouts {
+    create = "40m"
+  }
   launch_type            = "FARGATE"
   enable_execute_command = true
   wait_for_steady_state  = true
