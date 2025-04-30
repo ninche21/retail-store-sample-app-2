@@ -165,11 +165,6 @@ resource "aws_ecs_service" "this" {
   launch_type            = "FARGATE"
   enable_execute_command = true
   wait_for_steady_state  = true
-  
-  # Increase timeout for service creation
-  timeouts {
-    create = "40m"
-  }
 
   network_configuration {
     security_groups  = [aws_security_group.this.id]

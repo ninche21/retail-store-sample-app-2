@@ -427,3 +427,76 @@ append this chat to the AmazonQ.md file in the root of the repo, then commit and
 │
 │ A local value named "full_environment_name" was already defined at locals.tf:2,3-47. Local value names must be
 │ unique within a module.
+
+## Amazon Q Chat Session - April 30, 2025
+
+### User:
+we need to fix this project - "retail-store-sample-app/terraform/ecs/default on  main
+➜ terraform plan
+var.datadog_forwarder_lambda_arn
+  ARN of the Datadog Forwarder Lambda function
+
+  Enter a value: arn:aws:lambda:us-east-1:347830095179:function:DatadogIntegration-ForwarderStack-YU7W1O-Forwarder-LcxelJJBiCQ4
+
+╷
+│ Error: Duplicate timeouts block
+│
+│   on ../../lib/ecs/service/ecs.tf line 170, in resource "aws_ecs_service" "this":
+│  170:   timeouts {
+│
+│ Only one block of type "timeouts" is allowed. Previous definition was at ../../lib/ecs/service/ecs.tf:162,3-11.
+╵
+╷
+│ Error: Duplicate timeouts block
+│
+│   on ../../lib/ecs/service/ecs.tf line 170, in resource "aws_ecs_service" "this":
+│  170:   timeouts {
+│
+│ Only one block of type "timeouts" is allowed. Previous definition was at ../../lib/ecs/service/ecs.tf:162,3-11.
+╵
+╷
+│ Error: Duplicate timeouts block
+│
+│   on ../../lib/ecs/service/ecs.tf line 170, in resource "aws_ecs_service" "this":
+│  170:   timeouts {
+│
+│ Only one block of type "timeouts" is allowed. Previous definition was at ../../lib/ecs/service/ecs.tf:162,3-11.
+╵
+
+retail-store-sample-app/terraform/ecs/default on  main took 1m 3.2s"  
+
+### Amazon Q:
+I see the issue with the Terraform configuration. There are duplicate `timeouts` blocks in the `aws_ecs_service` resource definition in the `../../lib/ecs/service/ecs.tf` file. Let me fix this for you.
+
+Let me check the file and remove the duplicate timeouts block:
+
+I can see the issue now. There are two `timeouts` blocks in the `aws_ecs_service` resource:
+1. One at line 162: `timeouts { create = "40m" }`
+2. Another at line 170: `timeouts { create = "40m" }` with a comment above it
+
+Let me fix this by removing the duplicate timeouts block:
+
+The changes have been successfully implemented. You should now be able to run `terraform plan` without encountering the duplicate timeouts error.
+
+### User:
+yes - let's update with all these recommendations
+
+### Amazon Q:
+I'll help you implement all the recommendations to fix the CloudWatch logs not flowing into Datadog. Let's start with updating the IAM role permissions, configuring the Datadog Forwarder, and verifying the Datadog AWS integration settings.
+
+1. **Updated IAM Role Permissions**:
+   - Successfully attached the CloudWatchLogsReadOnlyAccess policy to the DatadogIntegrationRole
+   - This provides the necessary permissions for Datadog to read CloudWatch logs
+
+2. **Configured the Datadog Forwarder**:
+   - Added a subscription filter to the retail-store-ecs-fermat-tasks log group
+   - The filter forwards all logs to the Datadog Forwarder Lambda function
+   - Added the necessary Lambda permission to allow CloudWatch Logs to invoke the Forwarder
+
+3. **Next Steps for Datadog AWS Integration**:
+   - Log into your Datadog account and navigate to the AWS Integration page
+   - Verify that log collection is enabled for your AWS account
+   - Add or verify that the log group pattern includes `retail-store-ecs*`
+   - If needed, force a refresh of the integration
+
+The changes have been successfully implemented. You should start seeing your ECS logs flowing into Datadog within a few minutes. If logs still don't appear after 15-20 minutes, you may need to check the Datadog Forwarder Lambda logs for any errors or issues.
