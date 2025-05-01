@@ -78,6 +78,24 @@ variable "subnet_ids" {
   default     = []
 }
 
+variable "vpc_id" {
+  description = "VPC ID where database monitoring resources will be deployed"
+  type        = string
+  default     = ""
+}
+
+variable "catalog_security_group_id" {
+  description = "Security group ID of the catalog database"
+  type        = string
+  default     = ""
+}
+
+variable "orders_security_group_id" {
+  description = "Security group ID of the orders database"
+  type        = string
+  default     = ""
+}
+
 # Create IAM role for Datadog database monitoring
 resource "aws_iam_role" "datadog_dbm_role" {
   count = var.enable_database_monitoring ? 1 : 0
@@ -115,7 +133,8 @@ resource "aws_iam_policy" "datadog_dbm_policy" {
           "rds:ListTagsForResource",
           "cloudwatch:GetMetricData",
           "cloudwatch:GetMetricStatistics",
-          "cloudwatch:ListMetrics"
+          "cloudwatch:ListMetrics",
+          "secretsmanager:GetSecretValue"
         ]
         Effect   = "Allow"
         Resource = "*"
@@ -160,6 +179,48 @@ resource "aws_security_group" "datadog_dbm_sg" {
   })
 }
 
+# Create AWS Secrets Manager secret for catalog database admin credentials
+resource "aws_secretsmanager_secret" "catalog_db_admin_creds" {
+  count       = var.enable_database_monitoring ? 1 : 0
+  name        = "${var.environment_name}-catalog-db-admin-creds"
+  description = "Admin credentials for catalog database for Datadog DBM"
+  tags        = var.tags
+}
+
+resource "aws_secretsmanager_secret_version" "catalog_db_admin_creds" {
+  count     = var.enable_database_monitoring ? 1 : 0
+  secret_id = aws_secretsmanager_secret.catalog_db_admin_creds[0].id
+  secret_string = jsonencode({
+    username = var.catalog_db_username
+    password = var.catalog_db_password
+    engine   = "mysql"
+    host     = var.catalog_db_endpoint
+    port     = var.catalog_db_port
+    dbname   = var.catalog_db_name
+  })
+}
+
+# Create AWS Secrets Manager secret for orders database admin credentials
+resource "aws_secretsmanager_secret" "orders_db_admin_creds" {
+  count       = var.enable_database_monitoring ? 1 : 0
+  name        = "${var.environment_name}-orders-db-admin-creds"
+  description = "Admin credentials for orders database for Datadog DBM"
+  tags        = var.tags
+}
+
+resource "aws_secretsmanager_secret_version" "orders_db_admin_creds" {
+  count     = var.enable_database_monitoring ? 1 : 0
+  secret_id = aws_secretsmanager_secret.orders_db_admin_creds[0].id
+  secret_string = jsonencode({
+    username = var.orders_db_username
+    password = var.orders_db_password
+    engine   = "postgres"
+    host     = var.orders_db_endpoint
+    port     = var.orders_db_port
+    dbname   = var.orders_db_name
+  })
+}
+
 # Create task definition for catalog database monitoring
 resource "aws_ecs_task_definition" "datadog_catalog_dbm" {
   count                    = var.enable_database_monitoring ? 1 : 0
@@ -177,10 +238,6 @@ resource "aws_ecs_task_definition" "datadog_catalog_dbm" {
       image     = "public.ecr.aws/datadog/agent:7"
       essential = true
       environment = [
-        {
-          name  = "DD_API_KEY"
-          value = var.datadog_api_key
-        },
         {
           name  = "DD_SITE"
           value = "datadoghq.com"
@@ -204,26 +261,16 @@ resource "aws_ecs_task_definition" "datadog_catalog_dbm" {
         {
           name  = "DD_SERVICE"
           value = "catalog-db-monitoring"
+        }
+      ]
+      secrets = [
+        {
+          name      = "DD_API_KEY"
+          valueFrom = aws_secretsmanager_secret.datadog_api_key.arn
         },
         {
-          name  = "DD_DBM_MYSQL_HOST"
-          value = var.catalog_db_endpoint
-        },
-        {
-          name  = "DD_DBM_MYSQL_PORT"
-          value = tostring(var.catalog_db_port)
-        },
-        {
-          name  = "DD_DBM_MYSQL_USERNAME"
-          value = var.catalog_db_username
-        },
-        {
-          name  = "DD_DBM_MYSQL_PASSWORD"
-          value = var.catalog_db_password
-        },
-        {
-          name  = "DD_DBM_MYSQL_DATABASE"
-          value = var.catalog_db_name
+          name      = "DD_DBM_MYSQL_ADMIN_SECRET_ARN"
+          valueFrom = aws_secretsmanager_secret.catalog_db_admin_creds[0].arn
         }
       ]
       logConfiguration = {
@@ -259,10 +306,6 @@ resource "aws_ecs_task_definition" "datadog_orders_dbm" {
       essential = true
       environment = [
         {
-          name  = "DD_API_KEY"
-          value = var.datadog_api_key
-        },
-        {
           name  = "DD_SITE"
           value = "datadoghq.com"
         },
@@ -285,26 +328,16 @@ resource "aws_ecs_task_definition" "datadog_orders_dbm" {
         {
           name  = "DD_SERVICE"
           value = "orders-db-monitoring"
+        }
+      ]
+      secrets = [
+        {
+          name      = "DD_API_KEY"
+          valueFrom = aws_secretsmanager_secret.datadog_api_key.arn
         },
         {
-          name  = "DD_DBM_POSTGRES_HOST"
-          value = var.orders_db_endpoint
-        },
-        {
-          name  = "DD_DBM_POSTGRES_PORT"
-          value = tostring(var.orders_db_port)
-        },
-        {
-          name  = "DD_DBM_POSTGRES_USERNAME"
-          value = var.orders_db_username
-        },
-        {
-          name  = "DD_DBM_POSTGRES_PASSWORD"
-          value = var.orders_db_password
-        },
-        {
-          name  = "DD_DBM_POSTGRES_DATABASE"
-          value = var.orders_db_name
+          name      = "DD_DBM_POSTGRES_ADMIN_SECRET_ARN"
+          valueFrom = aws_secretsmanager_secret.orders_db_admin_creds[0].arn
         }
       ]
       logConfiguration = {
@@ -379,6 +412,23 @@ resource "aws_security_group_rule" "orders_db_access" {
   source_security_group_id = aws_security_group.datadog_dbm_sg[0].id
   security_group_id        = var.orders_security_group_id
   description              = "Allow Datadog monitoring agent to access orders database"
+}
+
+# Output the ARNs of the admin credential secrets
+output "catalog_db_admin_creds_arn" {
+  description = "ARN of the catalog database admin credentials secret"
+  value       = var.enable_database_monitoring ? aws_secretsmanager_secret.catalog_db_admin_creds[0].arn : ""
+}
+
+output "orders_db_admin_creds_arn" {
+  description = "ARN of the orders database admin credentials secret"
+  value       = var.enable_database_monitoring ? aws_secretsmanager_secret.orders_db_admin_creds[0].arn : ""
+}
+
+# Output the security group ID for Datadog DBM
+output "datadog_dbm_sg_id" {
+  description = "ID of the security group for Datadog database monitoring"
+  value       = var.enable_database_monitoring ? aws_security_group.datadog_dbm_sg[0].id : ""
 }
 
 # Add data source for current region

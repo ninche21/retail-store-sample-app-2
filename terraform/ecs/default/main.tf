@@ -28,7 +28,7 @@ module "datadog" {
   enable_database_monitoring = var.enable_database_monitoring
   vpc_id                     = module.vpc.inner.vpc_id
   subnet_ids                 = module.vpc.inner.private_subnets
-  ecs_cluster_arn            = module.retail_app_ecs.cluster_arn
+  ecs_cluster_arn            = var.enable_database_monitoring ? aws_ecs_cluster.datadog_dbm[0].arn : ""
   
   # Catalog database configuration
   catalog_db_endpoint        = module.dependencies.catalog_db_endpoint
@@ -78,10 +78,6 @@ module "retail_app_ecs" {
   catalog_db_password = module.dependencies.catalog_db_master_password
 
   carts_dynamodb_table_name = module.dependencies.carts_dynamodb_table_name
-  carts_dynamodb_policy_arn = module.dependencies.carts_dynamodb_policy_arn
-
-  checkout_redis_endpoint = module.dependencies.checkout_elasticache_primary_endpoint
-  checkout_redis_port     = module.dependencies.checkout_elasticache_port
 
   orders_db_endpoint = module.dependencies.orders_db_endpoint
   orders_db_port     = module.dependencies.orders_db_port
@@ -89,12 +85,19 @@ module "retail_app_ecs" {
   orders_db_username = module.dependencies.orders_db_master_username
   orders_db_password = module.dependencies.orders_db_master_password
 
-  mq_endpoint = module.dependencies.mq_broker_endpoint
-  mq_username = module.dependencies.mq_user
+  mq_endpoint = module.dependencies.mq_endpoint
+  mq_username = module.dependencies.mq_username
   mq_password = module.dependencies.mq_password
-  
+
   # Datadog configuration
-  enable_datadog           = var.enable_datadog
-  datadog_api_key_arn      = var.enable_datadog ? module.datadog[0].datadog_api_key_arn : ""
-  datadog_forwarder_lambda_arn = var.datadog_forwarder_lambda_arn
+  enable_datadog     = var.enable_datadog
+  datadog_api_key_arn = var.enable_datadog ? module.datadog[0].datadog_api_key_arn : ""
+}
+
+output "application_url" {
+  value = "http://${module.retail_app_ecs.alb_dns_name}"
+}
+
+output "environment_name" {
+  value = local.standard_environment_name
 }
