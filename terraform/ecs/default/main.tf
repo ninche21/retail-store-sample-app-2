@@ -93,11 +93,3 @@ module "retail_app_ecs" {
   enable_datadog     = var.enable_datadog
   datadog_api_key_arn = var.enable_datadog ? module.datadog[0].datadog_api_key_arn : ""
 }
-
-output "application_url" {
-  value = "http://${module.retail_app_ecs.alb_dns_name}"
-}
-
-output "environment_name" {
-  value = local.standard_environment_name
-}
