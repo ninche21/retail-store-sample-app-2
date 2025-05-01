@@ -94,6 +94,7 @@ module "retail_app_ecs" {
   mq_password = module.dependencies.mq_password
 
   # Datadog configuration
-  enable_datadog     = var.enable_datadog
-  datadog_api_key_arn = var.enable_datadog ? module.datadog[0].datadog_api_key_arn : ""
+  enable_datadog           = var.enable_datadog
+  datadog_api_key_arn      = var.enable_datadog ? module.datadog[0].datadog_api_key_arn : ""
+  datadog_forwarder_lambda_arn = var.enable_datadog ? var.datadog_forwarder_lambda_arn : ""
 }
