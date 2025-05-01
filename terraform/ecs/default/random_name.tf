@@ -11,17 +11,23 @@ locals {
     "wittgenstein", "hume", "locke", "spinoza", "aquinas"
   ]
   
-  # Generate a random 4-character string
+  # Generate a random 4-character string for sensitive resources only
   random_suffix = random_string.suffix.result
   
   # Select a random name from the list
   random_name = local.philosopher_names[random_integer.name_index.result]
   
-  # Create the full environment name with the random name and suffix appended
-  full_environment_name = "${var.environment_name}-${local.random_name}-${local.random_suffix}"
+  # Create the standard environment name with just the philosopher name
+  standard_environment_name = "${var.environment_name}-${local.random_name}"
+  
+  # Create names for sensitive resources with additional random suffix
+  sensitive_resource_name = "${var.environment_name}-${local.random_name}-${local.random_suffix}"
+  
+  # Use the standard environment name as the full environment name
+  full_environment_name = local.standard_environment_name
 }
 
-# Generate a random 4-character string for additional uniqueness
+# Generate a random 4-character string for sensitive resources
 resource "random_string" "suffix" {
   length  = 4
   special = false
@@ -42,10 +48,15 @@ output "random_name" {
 
 output "random_suffix" {
   value       = local.random_suffix
-  description = "The randomly generated suffix for additional uniqueness"
+  description = "The randomly generated suffix for sensitive resources"
 }
 
-output "full_environment_name" {
-  value       = local.full_environment_name
-  description = "The full environment name with random philosopher/mathematician name and suffix appended"
+output "standard_environment_name" {
+  value       = local.standard_environment_name
+  description = "The standard environment name with philosopher name"
+}
+
+output "sensitive_resource_name" {
+  value       = local.sensitive_resource_name
+  description = "The name for sensitive resources with additional random suffix"
 }
