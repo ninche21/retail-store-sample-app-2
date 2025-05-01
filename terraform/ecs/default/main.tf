@@ -78,12 +78,16 @@ module "retail_app_ecs" {
   catalog_db_password = module.dependencies.catalog_db_master_password
 
   carts_dynamodb_table_name = module.dependencies.carts_dynamodb_table_name
+  carts_dynamodb_policy_arn = module.dependencies.carts_dynamodb_policy_arn
 
   orders_db_endpoint = module.dependencies.orders_db_endpoint
   orders_db_port     = module.dependencies.orders_db_port
   orders_db_name     = module.dependencies.orders_db_database_name
   orders_db_username = module.dependencies.orders_db_master_username
   orders_db_password = module.dependencies.orders_db_master_password
+
+  checkout_redis_endpoint = module.dependencies.checkout_redis_endpoint
+  checkout_redis_port     = module.dependencies.checkout_redis_port
 
   mq_endpoint = module.dependencies.mq_endpoint
   mq_username = module.dependencies.mq_username
