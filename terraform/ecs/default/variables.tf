@@ -59,8 +59,4 @@ variable "datadog_dbm_cluster_name" {
   type        = string
   default     = "datadog-managed-dbm"
 }
-  description = "Enable Datadog database monitoring"
-  type        = bool
-  default     = false
-}
 
