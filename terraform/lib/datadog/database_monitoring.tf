@@ -119,6 +119,16 @@ resource "aws_iam_policy" "datadog_dbm_policy" {
         ]
         Effect   = "Allow"
         Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:DescribeLogStreams"
+        ]
+        Resource = "arn:aws:logs:*:*:*"
       }
     ]
   })
