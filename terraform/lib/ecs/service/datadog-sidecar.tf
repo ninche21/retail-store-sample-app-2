@@ -60,6 +60,10 @@ locals {
       {
         "name": "DD_LOGS_CONFIG_USE_HTTP",
         "value": "true"
+      },
+      {
+        "name": "DD_ECS_TASK_COLLECTION_ENABLED",
+        "value": "true"
       }
     ],
     "secrets": [
