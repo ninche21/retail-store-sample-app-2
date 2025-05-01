@@ -8,18 +8,6 @@ output "environment_name" {
   description = "The environment name used for all resources"
 }
 
-# Output the Datadog DBM cluster ARN
-output "datadog_dbm_cluster_arn" {
-  description = "ARN of the Datadog DBM ECS cluster"
-  value       = var.enable_database_monitoring ? aws_ecs_cluster.datadog_dbm[0].arn : ""
-}
-
-# Output the Datadog DBM cluster name
-output "datadog_dbm_cluster_name" {
-  description = "Name of the Datadog DBM ECS cluster"
-  value       = var.enable_database_monitoring ? aws_ecs_cluster.datadog_dbm[0].name : ""
-}
-
 # Output the catalog database admin credentials ARN
 output "catalog_db_admin_creds_arn" {
   description = "ARN of the catalog database admin credentials secret"
