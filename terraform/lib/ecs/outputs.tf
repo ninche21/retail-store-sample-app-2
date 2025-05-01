@@ -17,3 +17,8 @@ output "orders_security_group_id" {
   value       = module.orders_service.task_security_group_id
   description = "Security group ID of the orders service"
 }
+
+output "cluster_arn" {
+  value       = aws_ecs_cluster.cluster.arn
+  description = "ARN of the ECS cluster"
+}

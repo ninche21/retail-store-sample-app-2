@@ -35,6 +35,11 @@ output "catalog_db_arn" {
   value       = module.catalog_rds.cluster_arn
 }
 
+output "catalog_db_security_group_id" {
+  description = "Security group ID for the catalog database"
+  value       = module.catalog_rds.security_group_id
+}
+
 output "orders_db_endpoint" {
   description = "Writer endpoint for the orders database"
   value       = module.orders_rds.cluster_endpoint
@@ -70,6 +75,11 @@ output "orders_db_reader_endpoint" {
 output "orders_db_arn" {
   description = "ARN for the orders database"
   value       = module.orders_rds.cluster_arn
+}
+
+output "orders_db_security_group_id" {
+  description = "Security group ID for the orders database"
+  value       = module.orders_rds.security_group_id
 }
 
 output "carts_dynamodb_table_arn" {

@@ -45,3 +45,10 @@ variable "datadog_forwarder_lambda_arn" {
   # No default - this should be provided by the user when enable_datadog is true
 }
 
+# Datadog database monitoring variables
+variable "enable_database_monitoring" {
+  description = "Enable Datadog database monitoring"
+  type        = bool
+  default     = false
+}
+

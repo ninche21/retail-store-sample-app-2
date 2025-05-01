@@ -23,6 +23,28 @@ module "datadog" {
   # Datadog integration role and forwarder configuration
   datadog_integration_role_name = var.datadog_integration_role_name
   datadog_forwarder_lambda_arn  = var.datadog_forwarder_lambda_arn
+  
+  # Database monitoring configuration
+  enable_database_monitoring = var.enable_database_monitoring
+  vpc_id                     = module.vpc.inner.vpc_id
+  subnet_ids                 = module.vpc.inner.private_subnets
+  ecs_cluster_arn            = module.retail_app_ecs.cluster_arn
+  
+  # Catalog database configuration
+  catalog_db_endpoint        = module.dependencies.catalog_db_endpoint
+  catalog_db_port            = module.dependencies.catalog_db_port
+  catalog_db_name            = module.dependencies.catalog_db_database_name
+  catalog_db_username        = module.dependencies.catalog_db_master_username
+  catalog_db_password        = module.dependencies.catalog_db_master_password
+  catalog_security_group_id  = module.dependencies.catalog_db_security_group_id
+  
+  # Orders database configuration
+  orders_db_endpoint         = module.dependencies.orders_db_endpoint
+  orders_db_port             = module.dependencies.orders_db_port
+  orders_db_name             = module.dependencies.orders_db_database_name
+  orders_db_username         = module.dependencies.orders_db_master_username
+  orders_db_password         = module.dependencies.orders_db_master_password
+  orders_security_group_id   = module.dependencies.orders_db_security_group_id
 }
 
 module "dependencies" {
