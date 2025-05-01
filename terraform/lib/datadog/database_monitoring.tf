@@ -162,7 +162,7 @@ resource "aws_security_group" "datadog_dbm_sg" {
 
 # Create task definition for catalog database monitoring
 resource "aws_ecs_task_definition" "datadog_catalog_dbm" {
-  count                    = var.enable_database_monitoring && var.catalog_db_endpoint != "" ? 1 : 0
+  count                    = var.enable_database_monitoring ? 1 : 0
   family                   = "${var.environment_name}-datadog-catalog-dbm"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
@@ -243,7 +243,7 @@ resource "aws_ecs_task_definition" "datadog_catalog_dbm" {
 
 # Create task definition for orders database monitoring
 resource "aws_ecs_task_definition" "datadog_orders_dbm" {
-  count                    = var.enable_database_monitoring && var.orders_db_endpoint != "" ? 1 : 0
+  count                    = var.enable_database_monitoring ? 1 : 0
   family                   = "${var.environment_name}-datadog-orders-dbm"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
@@ -324,7 +324,7 @@ resource "aws_ecs_task_definition" "datadog_orders_dbm" {
 
 # Create ECS service for catalog database monitoring
 resource "aws_ecs_service" "datadog_catalog_dbm" {
-  count           = var.enable_database_monitoring && var.catalog_db_endpoint != "" ? 1 : 0
+  count           = var.enable_database_monitoring ? 1 : 0
   name            = "datadog-catalog-dbm"
   cluster         = var.ecs_cluster_arn
   task_definition = aws_ecs_task_definition.datadog_catalog_dbm[0].arn
@@ -342,7 +342,7 @@ resource "aws_ecs_service" "datadog_catalog_dbm" {
 
 # Create ECS service for orders database monitoring
 resource "aws_ecs_service" "datadog_orders_dbm" {
-  count           = var.enable_database_monitoring && var.orders_db_endpoint != "" ? 1 : 0
+  count           = var.enable_database_monitoring ? 1 : 0
   name            = "datadog-orders-dbm"
   cluster         = var.ecs_cluster_arn
   task_definition = aws_ecs_task_definition.datadog_orders_dbm[0].arn

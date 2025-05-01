@@ -11,11 +11,21 @@ locals {
     "wittgenstein", "hume", "locke", "spinoza", "aquinas"
   ]
   
+  # Generate a random 4-character string
+  random_suffix = random_string.suffix.result
+  
   # Select a random name from the list
   random_name = local.philosopher_names[random_integer.name_index.result]
   
-  # Create the full environment name with the random name appended
-  full_environment_name = "${var.environment_name}-${local.random_name}"
+  # Create the full environment name with the random name and suffix appended
+  full_environment_name = "${var.environment_name}-${local.random_name}-${local.random_suffix}"
+}
+
+# Generate a random 4-character string for additional uniqueness
+resource "random_string" "suffix" {
+  length  = 4
+  special = false
+  upper   = false
 }
 
 # Generate a random index to select a name
@@ -30,7 +40,12 @@ output "random_name" {
   description = "The randomly selected philosopher/mathematician name"
 }
 
+output "random_suffix" {
+  value       = local.random_suffix
+  description = "The randomly generated suffix for additional uniqueness"
+}
+
 output "full_environment_name" {
   value       = local.full_environment_name
-  description = "The full environment name with random philosopher/mathematician name appended"
+  description = "The full environment name with random philosopher/mathematician name and suffix appended"
 }
