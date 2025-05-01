@@ -27,9 +27,16 @@ variable "datadog_forwarder_lambda_arn" {
   default     = ""
 }
 
+# Generate a random string to append to resource names
+resource "random_string" "suffix" {
+  length  = 4
+  special = false
+  upper   = false
+}
+
 # Create a secret for the Datadog API key
 resource "aws_secretsmanager_secret" "datadog_api_key" {
-  name        = "${var.environment_name}-datadog-api-key"
+  name        = "${var.environment_name}-datadog-api-key-${random_string.suffix.result}"
   description = "Datadog API key for ${var.environment_name} environment"
   tags        = var.tags
 }
