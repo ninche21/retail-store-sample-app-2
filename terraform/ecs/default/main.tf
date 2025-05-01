@@ -86,11 +86,11 @@ module "retail_app_ecs" {
   orders_db_username = module.dependencies.orders_db_master_username
   orders_db_password = module.dependencies.orders_db_master_password
 
-  checkout_redis_endpoint = module.dependencies.checkout_redis_endpoint
-  checkout_redis_port     = module.dependencies.checkout_redis_port
+  checkout_redis_endpoint = module.dependencies.checkout_elasticache_primary_endpoint
+  checkout_redis_port     = module.dependencies.checkout_elasticache_port
 
-  mq_endpoint = module.dependencies.mq_endpoint
-  mq_username = module.dependencies.mq_username
+  mq_endpoint = module.dependencies.mq_broker_endpoint
+  mq_username = module.dependencies.mq_user
   mq_password = module.dependencies.mq_password
 
   # Datadog configuration
