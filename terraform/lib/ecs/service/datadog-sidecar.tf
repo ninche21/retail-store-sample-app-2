@@ -36,6 +36,30 @@ locals {
       {
         "name": "ECS_FARGATE",
         "value": "true"
+      },
+      {
+        "name": "DD_SITE",
+        "value": "datadoghq.com"
+      },
+      {
+        "name": "DD_ENV",
+        "value": "${var.environment_name}"
+      },
+      {
+        "name": "DD_SERVICE",
+        "value": "${var.service_name}"
+      },
+      {
+        "name": "DD_VERSION",
+        "value": "1.1.0"
+      },
+      {
+        "name": "DD_APM_DD_URL",
+        "value": "https://trace.agent.datadoghq.com"
+      },
+      {
+        "name": "DD_LOGS_CONFIG_USE_HTTP",
+        "value": "true"
       }
     ],
     "secrets": [

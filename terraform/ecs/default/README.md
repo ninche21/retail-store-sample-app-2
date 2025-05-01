@@ -67,6 +67,20 @@ After deployment, verify in your Datadog account that:
 - The log groups pattern includes your ECS log groups (e.g., `retail-store-ecs*`)
 - The correct AWS account and regions are selected
 
+### Datadog Agent Configuration
+
+The Datadog Agent is configured with the following environment variables to ensure proper functionality:
+
+- `DD_SITE`: Set to "datadoghq.com" to specify the Datadog intake site
+- `DD_ENV`: Set to the environment name for proper tagging
+- `DD_SERVICE`: Set to the service name for unified service tagging
+- `DD_VERSION`: Set to the application version for version tracking
+- `DD_APM_DD_URL`: Set to "https://trace.agent.datadoghq.com" for APM trace collection
+- `DD_LOGS_CONFIG_USE_HTTP`: Set to "true" to enable HTTP log forwarding
+- `ECS_FARGATE`: Set to "true" to enable Fargate-specific metrics collection
+
+These settings ensure that logs, metrics, and traces are properly collected and sent to Datadog.
+
 ## Reference
 
 This section documents the variables and outputs of the Terraform configuration.
