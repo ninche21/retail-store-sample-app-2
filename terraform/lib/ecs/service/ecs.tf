@@ -13,7 +13,7 @@ locals {
   datadog_env_vars = var.enable_datadog ? jsonencode([
     {
       "name": "DD_AGENT_HOST",
-      "value": "localhost"
+      "value": "*********"
     },
     {
       "name": "DD_TRACE_AGENT_PORT",
@@ -40,7 +40,7 @@ locals {
   # Define Datadog agent container if enabled
   datadog_container = var.enable_datadog ? jsonencode([{
     "name": "datadog-agent",
-    "image": "public.ecr.aws/datadog/agent:7",
+    "image": "public.ecr.aws/datadog/agent:latest",
     "essential": true,
     "environment": [
       {
@@ -74,6 +74,18 @@ locals {
       {
         "name": "ECS_FARGATE",
         "value": "true"
+      },
+      {
+        "name": "DD_ECS_FARGATE",
+        "value": "true"
+      },
+      {
+        "name": "DD_ECS_TASK_COLLECTION_ENABLED",
+        "value": "true"
+      },
+      {
+        "name": "DD_SITE",
+        "value": "datadoghq.com"
       }
     ],
     "secrets": [
@@ -83,11 +95,15 @@ locals {
       }
     ],
     "logConfiguration": {
-      "logDriver": "awslogs",
+      "logDriver": "awsfirelens",
       "options": {
-        "awslogs-group": "${var.cloudwatch_logs_group_id}",
-        "awslogs-region": "${data.aws_region.current.name}",
-        "awslogs-stream-prefix": "${var.service_name}-datadog-agent"
+        "Name": "datadog",
+        "Host": "http-intake.logs.datadoghq.com",
+        "TLS": "on",
+        "dd_service": "${var.service_name}",
+        "dd_source": "ecs",
+        "dd_tags": "env:${var.environment_name},service:${var.service_name}",
+        "provider": "ecs"
       }
     },
     "portMappings": [
@@ -98,6 +114,27 @@ locals {
       }
     ]
   }]) : "[]"
+
+  firelens_container = jsonencode([{
+    "essential": true,
+    "image": "amazon/aws-for-fluent-bit:stable",
+    "name": "log_router",
+    "firelensConfiguration": {
+      "type": "fluentbit",
+      "options": {
+        "enable-ecs-log-metadata": "true"
+      }
+    },
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "${var.cloudwatch_logs_group_id}",
+        "awslogs-region": "${data.aws_region.current.name}",
+        "awslogs-stream-prefix": "firelens"
+      }
+    },
+    "memoryReservation": 50
+  }])
 }
 
 data "aws_region" "current" {}
@@ -133,16 +170,21 @@ resource "aws_ecs_task_definition" "this" {
           "timeout": 5
         },
         "logConfiguration": {
-          "logDriver": "awslogs",
+          "logDriver": "awsfirelens",
           "options": {
-            "awslogs-group": "${var.cloudwatch_logs_group_id}",
-            "awslogs-region": "${data.aws_region.current.name}",
-            "awslogs-stream-prefix": "${var.service_name}-service"
+            "Name": "datadog",
+            "Host": "http-intake.logs.datadoghq.com",
+            "TLS": "on",
+            "dd_service": "${var.service_name}",
+            "dd_source": "ecs",
+            "dd_tags": "env:${var.environment_name},service:${var.service_name}",
+            "provider": "ecs"
           }
         },
-        "dependsOn": ${var.enable_datadog ? "[{\"containerName\": \"datadog-agent\", \"condition\": \"START\"}]" : "[]"}
+        "dependsOn": ${var.enable_datadog ? "[{\"containerName\": \"datadog-agent\", \"condition\": \"START\"}, {\"containerName\": \"log_router\", \"condition\": \"START\"}]" : "[{\"containerName\": \"log_router\", \"condition\": \"START\"}]"}
       }
       ${var.enable_datadog ? ",${substr(local.datadog_container, 1, length(local.datadog_container) - 2)}" : ""}
+      ,${substr(local.firelens_container, 1, length(local.firelens_container) - 2)}
     ]
   DEFINITION
   requires_compatibilities = ["FARGATE"]
@@ -197,3 +239,5 @@ resource "aws_ecs_service" "this" {
 
   tags = var.tags
 }
+
+    
