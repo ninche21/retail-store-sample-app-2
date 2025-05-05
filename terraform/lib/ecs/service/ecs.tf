@@ -100,6 +100,9 @@ resource "aws_ecs_task_definition" "this" {
         { name = "DD_AC_EXCLUDE", value = "name:datadog-agent" },
         { name = "DD_TAGS", value = "env:${var.environment_name} service:${var.service_name}" },
         { name = "DD_ECS_TASK_COLLECTION_ENABLED", value = "true" },
+        { name = "DD_LOGS_CONFIG_DOCKER_CONTAINER_USE_FILE", value = "true" },
+        { name = "DD_CONTAINER_EXCLUDE_LOGS", value = "name:datadog-agent" },
+        { name = "DD_CONTAINER_INCLUDE_LOGS", value = "name:application" },
         { name = "DD_PROCESS_AGENT_ENABLED", value = "true" }
       ]
       secrets             = [
