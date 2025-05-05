@@ -67,14 +67,18 @@ resource "aws_ecs_task_definition" "this" {
         retries          = 3
         timeout          = 5
       }
-      logConfiguration    = {
-        logDriver         = "awslogs"
-        options           = {
-          awslogs-group   = var.cloudwatch_logs_group_id
-          awslogs-region  = data.aws_region.current.name
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = var.cloudwatch_logs_group_id
+          awslogs-region        = data.aws_region.current.name
           awslogs-stream-prefix = "${var.service_name}-application"
+          dd-service            = var.service_name
+          dd-source            = "ecs"
+          dd-tags              = "env:${var.environment_name},service:${var.service_name}"
         }
       }
+
       dependsOn           = var.enable_datadog ? [
         {
           containerName   = "datadog-agent"
