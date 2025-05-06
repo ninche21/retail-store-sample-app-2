@@ -36,6 +36,28 @@ locals {
       "value": "true"
     }
   ]) : "[]"
+
+  # FireLens container definition
+  firelens_container = {
+    essential = true
+    image = "amazon/aws-for-fluent-bit:stable"
+    name = "log_router"
+    firelensConfiguration = {
+      type = "fluentbit"
+      options = {
+        "enable-ecs-log-metadata" = "true"
+      }
+    }
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group" = var.cloudwatch_logs_group_id
+        "awslogs-region" = data.aws_region.current.name
+        "awslogs-stream-prefix" = "firelens"
+      }
+    }
+    memoryReservation = 50
+  }
 }
 
 data "aws_region" "current" {}
@@ -56,34 +78,52 @@ resource "aws_ecs_task_definition" "this" {
         }
       ]
       environment          = jsondecode(local.environment)
-      secrets             = jsondecode(local.secrets)
-      cpu                 = 0
-      mountPoints         = []
-      volumesFrom         = []
-      healthCheck         = {
+      secrets              = jsondecode(local.secrets)
+      cpu                  = 0
+      mountPoints          = []
+      volumesFrom          = []
+      healthCheck          = {
         command           = [ "CMD-SHELL", "curl -f http://localhost:8080${var.healthcheck_path} || exit 1" ]
         interval          = 10
         startPeriod       = 60
-        retries          = 3
-        timeout          = 5
+        retries           = 3
+        timeout           = 5
       }
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          awslogs-group         = var.cloudwatch_logs_group_id
-          awslogs-region        = data.aws_region.current.name
-          awslogs-stream-prefix = "application"
+      logConfiguration     = {
+        logDriver          = "awsfirelens"
+        options            = {
+          Name             = "datadog"
+          Host             = "http-intake.logs.datadoghq.com"
+          TLS              = "on"
+          dd_service       = var.service_name
+          dd_source        = "ecs"
+          dd_tags          = "env:${var.environment_name},service:${var.service_name}"
+          provider         = "ecs"
         }
+        secretOptions      = [
+          {
+            name           = "apikey"
+            valueFrom      = var.datadog_api_key_arn
+          }
+        ]
       }
-
-
-      dependsOn           = var.enable_datadog ? [
+      dependsOn            = var.enable_datadog ? [
         {
-          containerName   = "datadog-agent"
-          condition      = "START"
+          containerName    = "datadog-agent"
+          condition        = "START"
+        },
+        {
+          containerName    = "log_router"
+          condition        = "START"
         }
-      ] : []
+      ] : [
+        {
+          containerName    = "log_router"
+          condition        = "START"
+        }
+      ]
     },
+    local.firelens_container,
     var.enable_datadog ? {
       name                = "datadog-agent"
       image               = "public.ecr.aws/datadog/agent:latest"
@@ -114,8 +154,8 @@ resource "aws_ecs_task_definition" "this" {
       portMappings        = [
         {
           containerPort   = 8126
-          hostPort       = 8126
-          protocol      = "tcp"
+          hostPort        = 8126
+          protocol        = "tcp"
         }
       ]
     } : null
@@ -173,4 +213,3 @@ resource "aws_ecs_service" "this" {
   tags = var.tags
 }
 
-    
