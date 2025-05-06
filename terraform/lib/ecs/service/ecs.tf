@@ -72,12 +72,10 @@ resource "aws_ecs_task_definition" "this" {
         options = {
           awslogs-group         = var.cloudwatch_logs_group_id
           awslogs-region        = data.aws_region.current.name
-          awslogs-stream-prefix = "${var.service_name}-application"
-          dd-service            = var.service_name
-          dd-source            = "ecs"
-          dd-tags              = "env:${var.environment_name},service:${var.service_name}"
+          awslogs-stream-prefix = "application"
         }
       }
+
 
       dependsOn           = var.enable_datadog ? [
         {
