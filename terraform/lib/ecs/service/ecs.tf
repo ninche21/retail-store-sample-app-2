@@ -1,4 +1,7 @@
 locals {
+  #adding this validation block for it to check for API Key 
+  validate_datadog_config = var.enable_datadog && var.datadog_api_key_arn == "" ? tobool("Datadog API key ARN must be provided when Datadog is enabled") : true
+
   environment = jsonencode([for k, v in var.environment_variables : {
     "name" : k,
     "value" : v
