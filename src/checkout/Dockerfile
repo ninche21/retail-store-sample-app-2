@@ -6,6 +6,7 @@ RUN yarn install --frozen-lockfile
 RUN yarn build
 USER node
 
+
 FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 
 # We tell DNF not to install Recommends and Suggests packages, which are
@@ -36,15 +37,4 @@ USER appuser
 COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
 COPY --chown=node:node --from=build /usr/src/app/dist ./dist
 
-# Install Datadog APM
-RUN npm install dd-trace --save
-
-# Set Datadog environment variables
-ENV DD_SERVICE="checkout"
-ENV DD_ENV="prod"
-ENV DD_LOGS_INJECTION=true
-ENV DD_TRACE_SAMPLE_RATE=1
-ENV DD_PROFILING_ENABLED=true
-
-# Modify the ENTRYPOINT to use the Datadog tracer
-ENTRYPOINT [ "node", "-r", "dd-trace/init", "dist/main.js" ]
+ENTRYPOINT [ "node", "dist/main.js" ]
