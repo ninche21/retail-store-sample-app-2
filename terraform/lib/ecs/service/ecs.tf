@@ -39,7 +39,6 @@ locals {
       "value": "true"
     }
   ]) : "[]"
-
   # FireLens container definition
   firelens_container = {
     essential = true
@@ -157,8 +156,8 @@ resource "aws_ecs_task_definition" "this" {
       portMappings        = [
         {
           containerPort   = 8126
-          hostPort        = 8126
-          protocol        = "tcp"
+          hostPort       = 8126
+          protocol      = "tcp"
         }
       ]
     } : null
