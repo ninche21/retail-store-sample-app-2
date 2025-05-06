@@ -1,5 +1,5 @@
 locals {
-  # Add validation for Datadog API key
+  #adding this validation block for it to check for API Key 
   validate_datadog_config = var.enable_datadog && var.datadog_api_key_arn == "" ? tobool("Datadog API key ARN must be provided when Datadog is enabled") : true
 
   environment = jsonencode([for k, v in var.environment_variables : {
@@ -61,26 +61,6 @@ locals {
     }
     memoryReservation = 50
   }
-
-  # Java APM environment variables
-  java_apm_env = [
-    {
-      name  = "JAVA_TOOL_OPTIONS"
-      value = "-javaagent:/dd-java-agent.jar -Ddd.profiling.enabled=true -Ddd.logs.injection=true -Ddd.service=${var.service_name} -Ddd.env=${var.environment_name} -Ddd.trace.sample.rate=1"
-    },
-    {
-      name  = "DD_APM_ENABLED"
-      value = "true"
-    },
-    {
-      name  = "DD_TRACE_SAMPLE_RATE"
-      value = "1"
-    },
-    {
-      name  = "DD_JMXFETCH_ENABLED"
-      value = "true"
-    }
-  ]
 }
 
 data "aws_region" "current" {}
@@ -100,20 +80,17 @@ resource "aws_ecs_task_definition" "this" {
           name             = "application"
         }
       ]
-      environment          = concat(
-        jsondecode(local.environment),
-        var.enable_datadog ? local.java_apm_env : []
-      )
-      secrets             = jsondecode(local.secrets)
-      cpu                 = 0
-      mountPoints         = []
-      volumesFrom         = []
-      healthCheck         = {
+      environment          = jsondecode(local.environment)
+      secrets              = jsondecode(local.secrets)
+      cpu                  = 0
+      mountPoints          = []
+      volumesFrom          = []
+      healthCheck          = {
         command           = [ "CMD-SHELL", "curl -f http://localhost:8080${var.healthcheck_path} || exit 1" ]
         interval          = 10
         startPeriod       = 60
-        retries          = 3
-        timeout          = 5
+        retries           = 3
+        timeout           = 5
       }
       logConfiguration     = {
         logDriver          = "awsfirelens"
