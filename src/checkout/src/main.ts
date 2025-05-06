@@ -1,3 +1,6 @@
+import tracer from 'dd-trace';
+tracer.init(); // This line initializes the tracer
+
 /**
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: MIT-0
