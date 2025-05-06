@@ -36,28 +36,6 @@ locals {
       "value": "true"
     }
   ]) : "[]"
-
-  # Define FireLens container configuration
-  firelens_container = {
-    essential = true
-    image = "amazon/aws-for-fluent-bit:stable"
-    name = "log_router"
-    firelensConfiguration = {
-      type = "fluentbit"
-      options = {
-        "enable-ecs-log-metadata" = "true"
-      }
-    }
-    logConfiguration = {
-      logDriver = "awslogs"
-      options = {
-        "awslogs-group" = var.cloudwatch_logs_group_id
-        "awslogs-region" = data.aws_region.current.name
-        "awslogs-stream-prefix" = "firelens"
-      }
-    }
-    memoryReservation = 50
-  }
 }
 
 data "aws_region" "current" {}
@@ -89,35 +67,25 @@ resource "aws_ecs_task_definition" "this" {
         retries          = 3
         timeout          = 5
       }
-      logConfiguration    = {
-        logDriver         = "awsfirelens"
-        options          = {
-          Name           = "datadog"
-          Host           = "http-intake.logs.datadoghq.com"
-          TLS            = "on"
-          dd_service     = var.service_name
-          dd_source      = "ecs"
-          dd_tags        = "env:${var.environment_name},service:${var.service_name}"
-          provider       = "ecs"
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = var.cloudwatch_logs_group_id
+          awslogs-region        = data.aws_region.current.name
+          awslogs-stream-prefix = "${var.service_name}-application"
+          dd-service            = var.service_name
+          dd-source            = "ecs"
+          dd-tags              = "env:${var.environment_name},service:${var.service_name}"
         }
       }
+
       dependsOn           = var.enable_datadog ? [
         {
           containerName   = "datadog-agent"
           condition      = "START"
-        },
-        {
-          containerName   = "log_router"
-          condition      = "START"
         }
-      ] : [
-        {
-          containerName   = "log_router"
-          condition      = "START"
-        }
-      ]
+      ] : []
     },
-    local.firelens_container,
     var.enable_datadog ? {
       name                = "datadog-agent"
       image               = "public.ecr.aws/datadog/agent:latest"
@@ -132,10 +100,7 @@ resource "aws_ecs_task_definition" "this" {
         { name = "DD_AC_EXCLUDE", value = "name:datadog-agent" },
         { name = "DD_TAGS", value = "env:${var.environment_name} service:${var.service_name}" },
         { name = "DD_ECS_TASK_COLLECTION_ENABLED", value = "true" },
-        { name = "DD_PROCESS_AGENT_ENABLED", value = "true" },
-        { name = "DD_LOGS_CONFIG_DOCKER_CONTAINER_USE_FILE", value = "true" },
-        { name = "DD_CONTAINER_EXCLUDE_LOGS", value = "name:datadog-agent" },
-        { name = "DD_CONTAINER_INCLUDE_LOGS", value = "name:application" }
+        { name = "DD_PROCESS_AGENT_ENABLED", value = "true" }
       ]
       secrets             = [
         { name = "DD_API_KEY", valueFrom = var.datadog_api_key_arn }
