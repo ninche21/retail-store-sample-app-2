@@ -1,4 +1,4 @@
 locals {
-  # Define which environment name to use for different resource types
-  environment_name = local.standard_environment_name
+  # Use the environment_name variable directly
+  environment_name = var.environment_name
 }
